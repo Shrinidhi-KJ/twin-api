@@ -84,4 +84,4 @@ Python 3.11, FastAPI, Pydantic, Uvicorn, Faker, Prance.
 
 ## Author
 
-[Your name] — MSc Artificial Intelligence, University of Stirling.
+Shrinidhi KJ — MSc Artificial Intelligence, University of Stirling.
