@@ -1,4 +1,4 @@
-# Twin API — Mock API Generator from OpenAPI Specs
+# Twin API - Mock API Generator from OpenAPI Specs
 
 A tool that takes any OpenAPI 3.x specification and automatically generates a fully functional mock server - a "digital twin" of the original API. This enables AI agents and developers to safely build and test integrations against a sandbox before swapping to production.
 
