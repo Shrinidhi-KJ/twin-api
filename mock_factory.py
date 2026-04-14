@@ -8,8 +8,8 @@ from faker import Faker
 def create_app(spec_path: str) -> FastAPI:
     fake = Faker()
 
-    with open(spec_path, "r") as f:
-        spec = json.load(f)
+    with open(spec_path, "r", encoding="utf-8") as f:
+        spec = json.load(f) 
 
     all_schemas = spec.get("components", {}).get("schemas", {})
 
@@ -80,8 +80,11 @@ def create_app(spec_path: str) -> FastAPI:
         return result
 
     def get_resource_from_path(path):
+        # Skip common version/prefix segments like v1, v2, api
+        VERSION_PREFIXES = {"v1", "v2", "v3", "v4", "api", "rest"}
         parts = [p for p in path.split("/") if p and not p.startswith("{")]
-        return parts[0] if parts else "default"
+        meaningful_parts = [p for p in parts if p.lower() not in VERSION_PREFIXES]
+        return meaningful_parts[0] if meaningful_parts else (parts[0] if parts else "default")
 
     def get_response_schema(operation):
         responses = operation.get("responses", {})
