@@ -13,7 +13,8 @@ if __name__ == "__main__":
 
     app = create_app(spec_path)
 
-    print(f"\nMock server starting on http://127.0.0.1:{port}")
+    print(f"\nMock server starting on http://0.0.0.0:{port}")
     print(f"Interactive docs: http://127.0.0.1:{port}/docs\n")
 
-    uvicorn.run(app, host="127.0.0.1", port=port)
+    # Bind to 0.0.0.0 so the container's port is reachable from the host
+    uvicorn.run(app, host="0.0.0.0", port=port)
