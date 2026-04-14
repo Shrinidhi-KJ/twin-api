@@ -19,18 +19,30 @@ Twin API solves this by generating a runnable mock directly from an OpenAPI spec
 - Handles nested objects, enums, arrays, and `$ref` references
 - In-memory persistence with full CRUD behaviour (GET, POST, PUT, PATCH, DELETE)
 - Automatic Bearer token and API key authentication, enforced when the spec defines security schemes
+- Handles version-prefixed paths (e.g. `/v1/customers`) correctly
 - Interactive Swagger UI docs at `/docs` for every generated mock
-- Works with any OpenAPI 3.x spec via a single command-line argument
+- Docker-ready for portable deployment
 
 ## Usage
 
-### Installation
+### Run with Docker (recommended)
+
+The fastest way to run the mock server. No Python or dependencies needed on your machine.
+
+```bash
+docker build -t twin-api .
+docker run -p 8000:8000 twin-api
+```
+
+Then visit `http://127.0.0.1:8000/docs` for the interactive API documentation.
+
+### Manual installation
 
 ```bash
 python -m venv venv
 source venv/bin/activate  # on macOS/Linux
 .\venv\Scripts\activate   # on Windows PowerShell
-pip install fastapi uvicorn pydantic prance openapi-spec-validator faker requests
+pip install -r requirements.txt
 ```
 
 ### Running a mock
@@ -46,18 +58,30 @@ python run_mock.py petstore.json
 python run_mock.py petstore.json 9000
 ```
 
-Visit `http://127.0.0.1:8000/docs` for the interactive API documentation.
-
 ### Example request
 
 ```bash
 curl -H "Authorization: Bearer any-token-works" http://127.0.0.1:8000/pet/findByStatus?status=available
 ```
 
+### Testing with larger real-world specs
+
+The repo includes `petstore.json` as a default example. To test with larger specs, download them on demand:
+
+```bash
+# Stripe API (~7.6MB, 414 endpoints, 72 resources)
+curl -o stripe.json https://raw.githubusercontent.com/stripe/openapi/master/openapi/spec3.json
+python run_mock.py stripe.json
+
+# GitHub REST API
+curl -o github.json https://raw.githubusercontent.com/github/rest-api-description/main/descriptions/api.github.com/api.github.com.json
+python run_mock.py github.json
+```
+
 ## How it works
 
-1. **Spec parsing**: The OpenAPI spec is loaded and resolved, including all `$ref` pointers to nested schemas.
-2. **Route generation**: For every path and method in the spec, a dynamic FastAPI route is registered. Specific routes (like `/pet/findByStatus`) are registered before parameterized routes (like `/pet/{petId}`) to avoid routing collisions.
+1. **Spec parsing**: The OpenAPI spec is loaded (UTF-8) and resolved, including all `$ref` pointers to nested schemas.
+2. **Route generation**: For every path and method in the spec, a dynamic FastAPI route is registered. Specific routes (like `/pet/findByStatus`) are registered before parameterized routes (like `/pet/{petId}`) to avoid routing collisions. Version prefixes (`/v1/`, `/v2/`, `/api/`) are stripped when identifying the resource name.
 3. **Fake data generation**: Each schema is recursively traversed. Simple types use Faker with field-name-aware heuristics (e.g. a field named `email` generates an email). Enums pick a valid value, arrays generate lists, and `$ref` fields recursively generate the referenced object.
 4. **CRUD simulation**: An in-memory dict acts as the database per resource. GET retrieves, POST creates with an auto-assigned ID, PUT/PATCH updates, DELETE removes.
 5. **Authentication**: If the spec defines `securitySchemes`, the mock enforces that an `Authorization` or `api_key` header is present. Any non-empty token is accepted, mirroring sandbox behaviour.
@@ -73,15 +97,15 @@ curl -H "Authorization: Bearer any-token-works" http://127.0.0.1:8000/pet/findBy
 
 - LLM-backed data generation for fields where simple heuristics fall short
 - Swagger 2.0 adapter layer
-- Full OAuth2 flow simulation
-- Persistent storage backend option (SQLite)
-- Dockerised deployment
+- Full OAuth2 flow simulation with mock authorization/token endpoints
+- Persistent storage backend option (SQLite) for longer-lived sandboxes
 - Automated evaluation harness to test whether AI-generated integration code against the mock works unchanged against production
+- Deployment templates for AWS (ECS/Fargate) and Google Cloud Run
 
 ## Tech stack
 
-Python 3.11, FastAPI, Pydantic, Uvicorn, Faker, Prance.
+Python 3.11, FastAPI, Pydantic, Uvicorn, Faker, Prance, Docker.
 
 ## Author
 
-Shrinidhi KJ — MSc Artificial Intelligence, University of Stirling.
+Shrinidhi KJ - MSc Artificial Intelligence, University of Stirling.
